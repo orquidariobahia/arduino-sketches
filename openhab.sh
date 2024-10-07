@@ -1,0 +1,1 @@
+sudo /bin/systemctl start openhab.service & sudo chmod a+rw /dev/ttyUSB0 &
