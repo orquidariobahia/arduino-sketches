@@ -1,3 +1,6 @@
+#define INT_MINUMUM_VALUE -32768
+#define UINT8_MAX_VALUE 255
+
 void storeEeprom(uint8_t pos, uint8_t value) {
   if (pos < 120 || pos > 159) {
     Serial.println("Out of bounds attempt to save");

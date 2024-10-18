@@ -5,9 +5,6 @@
 #define MY_REPEATER_FEATURE
 #define MY_NODE_ID 61
 
-#define INT_MINUMUM_VALUE -32768
-#define UINT8_MAX_VALUE 255
-
 // Relay setup
 
 #define RELAY_PIN 4  // Arduino Digital I/O pin number for first relay (second on pin+1 etc)
