@@ -64,14 +64,6 @@ MyMessage hum(HUM_ID, V_HUM);
 
 
 void setup() {
-  /*send(relay.set(relayStatus == RELAY_ON));
-  send(MyMessage(AUTONOMOUS_ID, V_STATUS).set(autonomous));
-  send(MyMessage(UPDATE_FREQUENCY_ID, V_CUSTOM).set(updateFrequency));
-  send(MyMessage(TEMPERATURE_ADJUST_ID, V_TEMP).set((float)tempAdjust, 1));
-  send(MyMessage(HUMIDITY_ADJUST_ID, V_HUM).set((float)humAdjust, 1));
-  send(MyMessage(MAX_HUMIDITY_ID, V_HUM).set((float)maxHumidity, 1));
-  send(MyMessage(MIN_HUMIDITY_ID, V_HUM).set((float)minHumidity, 1));*/
-  
   send(relay.set(relayStatus == RELAY_ON));
   send(MyMessage(AUTONOMOUS_ID, V_STATUS).set(autonomous));
   send(MyMessage(UPDATE_FREQUENCY_ID, V_TEXT).set(updateFrequency));
@@ -118,7 +110,7 @@ void presentation() {
 }
 
 void loop() {
-  /*
+  /* TODO
   Changes are needed
   call -> bool isConnected() 
   call -> int getError() -> https://github.com/RobTillaart/SHT31?tab=readme-ov-file#error-interface
