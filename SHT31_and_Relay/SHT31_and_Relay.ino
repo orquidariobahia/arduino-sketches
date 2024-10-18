@@ -54,6 +54,7 @@ float minHumidity = -999.0;
 uint32_t updateFrequency = 10000;
 float tempAdjust = 0.0;
 float humAdjust = 0.0;
+bool justOn = true;
 
 // Messages
 
@@ -126,11 +127,12 @@ void loop() {
   float t = sht.getTemperature() + tempAdjust;
   float h = sht.getHumidity() + humAdjust;
   if (autonomous) {
-    if (h < minHumidity && relayStatus == RELAY_OFF) {
+    if ((h < minHumidity && relayStatus == RELAY_OFF) || (justOn && h < maxHumidity)) {
 #ifdef MY_DEBUG
       Serial.println("Turning on");
       Serial.println(minHumidity);
 #endif
+      justOn = false;
       relayStatus = RELAY_ON;
       digitalWrite(RELAY_PIN, relayStatus);
       send(relay.set(relayStatus == RELAY_ON));
