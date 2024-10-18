@@ -107,15 +107,15 @@ void before() {
   }
 
   updateFrequency = readEeprom_int32(UPDATE_FREQUENCY_ID);
-  tempAdjust = readEeprom_int32(TEMPERATURE_ADJUST_ID);
-  humAdjust = readEeprom_int32(HUMIDITY_ADJUST_ID);
+  tempAdjust = fromUint32(readEeprom_int32(TEMPERATURE_ADJUST_ID));
+  humAdjust = fromUint32(readEeprom_int32(HUMIDITY_ADJUST_ID));
   autonomous = readEeprom(AUTONOMOUS_ID);
   minCo2 = readEeprom_int(MIN_CO2_ID);
   maxCo2 = readEeprom_int(MAX_CO2_ID);
 }
 
 void presentation() {
-  sendSketchInfo("ENS160_and_radio", "1.0");
+  sendSketchInfo("ENS160_and_radio", "1.1");
 
   present(TEMP_ID, S_TEMP, "[s] Temperature (°C)");
   present(HUM_ID, S_HUM, "[s] Humidity (%)");
@@ -214,11 +214,11 @@ void receive(const MyMessage &message) {
       break;
     case HUMIDITY_ADJUST_ID:
       humAdjust = message.getFloat();
-      storeEeprom_int32(HUMIDITY_ADJUST_ID, humAdjust);
+      storeEeprom_int32(HUMIDITY_ADJUST_ID, toUint32(humAdjust));
       break;
     case TEMPERATURE_ADJUST_ID:
       tempAdjust = message.getFloat();
-      storeEeprom_int32(TEMPERATURE_ADJUST_ID, tempAdjust);
+      storeEeprom_int32(TEMPERATURE_ADJUST_ID, toUint32(tempAdjust));
       break;
     case MIN_CO2_ID:
       minCo2 = message.getInt();
