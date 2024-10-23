@@ -1,6 +1,7 @@
 {
     "conventionalCommits.scopes": [
         "SHT31_and_Relay",
-        "ENS160_and_radio"
+        "ENS160_and_radio",
+        "ENS160_and_SHT31"
     ]
 }
