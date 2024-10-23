@@ -1,9 +1,14 @@
 // Definitions
 
+#define SKETCH_NAME "ENS160 and Radio"
+#define SKETCH_VERSION "v1.0"
+
 #define MY_RADIO_RF24
 #define MY_DEBUG
 #define MY_REPEATER_FEATURE
-#define MY_NODE_ID 61
+#define MY_NODE_ID 62
+#define MY_TRANSPORT_WAIT_READY_MS 1
+// #define MY_PASSIVE_NODE
 
 #define INT_MINUMUM_VALUE -32768
 #define UINT8_MAX_VALUE 255
@@ -78,7 +83,11 @@ void before() {
 #endif
   }
 
+#ifdef MY_DEBUG
+  ens160.begin(true);
+#else
   ens160.begin();
+#endif
   if (ens160.available()) {
     bool r = ens160.setMode(ENS160_OPMODE_STD);
 #ifdef MY_DEBUG
@@ -93,6 +102,12 @@ void before() {
 
     Serial.print("\tStandard mode ");
 #endif
+  } else {
+    bool res = ens160.setMode(ENS160_OPMODE_STD);
+#ifdef MY_DEBUG
+    Serial.println("Could not initialize ENS160");
+    Serial.println(res);
+#endif
   }
 
   updateFrequency = readEeprom_int32(UPDATE_FREQUENCY_ID);
@@ -101,7 +116,7 @@ void before() {
 }
 
 void presentation() {
-  sendSketchInfo("ENS160_and_radio", "1.0");
+  sendSketchInfo(SKETCH_NAME, SKETCH_VERSION);
 
   present(TEMP_ID, S_TEMP, "[s] Temperature (°C)");
   present(HUM_ID, S_HUM, "[s] Humidity (%)");
