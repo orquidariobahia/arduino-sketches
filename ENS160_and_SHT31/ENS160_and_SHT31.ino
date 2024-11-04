@@ -1,12 +1,12 @@
 // Definitions
 
 #define SKETCH_NAME "ENS160 and SHT31"
-#define SKETCH_VERSION "v1.0"
+#define SKETCH_VERSION "v1.1"
 
 #define MY_RADIO_RF24
 #define MY_DEBUG
 // #define MY_REPEATER_FEATURE
-#define MY_NODE_ID 63
+#define MY_NODE_ID 66
 #define MY_TRANSPORT_WAIT_READY_MS 1
 #define MY_PASSIVE_NODE
 
@@ -85,6 +85,13 @@ void before() {
   Serial.begin(115200);
   Wire.begin();
   Wire.setClock(100000);
+
+  Serial.print("Sketch Identification: ");
+  Serial.print(SKETCH_NAME);
+  Serial.print(" - ");
+  Serial.println(SKETCH_VERSION);
+  Serial.println(" - by Shirkit @ https://github.com/orquidariobahia/arduino-sketches");
+
   bool beg = sht.begin();
 
   uint16_t stat = sht.readStatus();
@@ -147,13 +154,13 @@ void presentation() {
   present(HUM_ID, S_HUM, "[s] Humidity (%)");
   present(CO2_ID, S_AIR_QUALITY, "[s] CO2 (ppm)");
   present(TVOC_ID, S_AIR_QUALITY, "[s] TVOC (ppb)");
-  present(AQI_ID, S_AIR_QUALITY, "[s] Air Quality Index - AQI (1-5)");
-  present(TEMP_ID, S_TEMP, "[s] Additional Temperature (°C)");
-  present(HUM_ID, S_HUM, "[s] Additional Humidity (%)");
+  present(AQI_ID, S_AIR_QUALITY, "[s] Air Quali - AQI (1-5)");
+  present(TEMP_ID, S_TEMP, "[s] Temp Addi (°C)");
+  present(HUM_ID, S_HUM, "[s] Hum Addi (%)");
 
-  present(UPDATE_FREQUENCY_ID, S_CUSTOM, "[c] Update Frequency (uint32 ms)");
-  present(TEMPERATURE_ADJUST_ID, S_TEMP, "[c] Temperature Adjust (float °C)");
-  present(HUMIDITY_ADJUST_ID, S_HUM, "[c] Humidity Adjust (float %)");
+  present(UPDATE_FREQUENCY_ID, S_CUSTOM, "[c] Updt Freq (uint32 ms)");
+  present(TEMPERATURE_ADJUST_ID, S_TEMP, "[c] Temp Adj (float °C)");
+  present(HUMIDITY_ADJUST_ID, S_HUM, "[c] Hum Adj (float %)");
 }
 
 void loop() {
