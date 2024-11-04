@@ -4,11 +4,11 @@
 #define SKETCH_VERSION "v1.1"
 
 #define MY_RADIO_RF24
-#define MY_DEBUG
+// #define MY_DEBUG
 // #define MY_REPEATER_FEATURE
 #define MY_NODE_ID 66
-#define MY_TRANSPORT_WAIT_READY_MS 1
-#define MY_PASSIVE_NODE
+// #define MY_TRANSPORT_WAIT_READY_MS 1
+// #define MY_PASSIVE_NODE
 
 #define INT_MINUMUM_VALUE -32768
 #define UINT8_MAX_VALUE 255
