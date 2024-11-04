@@ -4,7 +4,7 @@
 #define SKETCH_VERSION "v1.1"
 
 #define MY_RADIO_RF24
-// #define MY_DEBUG
+#define MY_DEBUG
 // #define MY_REPEATER_FEATURE
 #define MY_NODE_ID 66
 // #define MY_TRANSPORT_WAIT_READY_MS 1
@@ -164,6 +164,13 @@ void presentation() {
 }
 
 void loop() {
+
+  
+  Serial.print("Sketch Identification: ");
+  Serial.print(SKETCH_NAME);
+  Serial.print(" - ");
+  Serial.println(SKETCH_VERSION);
+  Serial.println(" - by Shirkit @ https://github.com/orquidariobahia/arduino-sketches");
   
   sht.read(false);
   float t = sht.getTemperature() + tempAdjust;
