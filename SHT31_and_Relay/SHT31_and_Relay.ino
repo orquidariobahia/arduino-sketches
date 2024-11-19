@@ -6,6 +6,7 @@
 #define MY_REPEATER_FEATURE
 #define MY_NODE_ID 71
 #define MY_TRANSPORT_WAIT_READY_MS 1
+// #define SETUP
 
 #define SHT31_ADDRESS 0x44
 
@@ -84,6 +85,15 @@ void before() {
   uint16_t stat = sht.readStatus();
 
   digitalWrite(RELAY_PIN, RELAY_OFF);
+
+#ifdef SETUP
+  storeEeprom_int32(MAX_HUMIDITY_ID, toUint32(93.0f));
+  storeEeprom_int32(MIN_HUMIDITY_ID, toUint32(80.0f));
+  storeEeprom(AUTONOMOUS_ID, true);
+  storeEeprom_int32(UPDATE_FREQUENCY_ID, 60000L);
+  storeEeprom_int32(TEMPERATURE_ADJUST_ID, toUint32(0.0f));
+  storeEeprom_int32(HUMIDITY_ADJUST_ID, toUint32(0.0f));
+#endif
 
   autonomous = readEeprom(AUTONOMOUS_ID);
   maxHumidity = fromUint32(readEeprom_int32(MAX_HUMIDITY_ID));
