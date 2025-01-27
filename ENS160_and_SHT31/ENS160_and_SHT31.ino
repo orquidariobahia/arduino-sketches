@@ -86,53 +86,54 @@ void before() {
   Wire.begin();
   Wire.setClock(100000);
 
-  Serial.print("Node ID: ");
+  Serial.print(F("Node ID: "));
   Serial.println(MY_NODE_ID);
   Serial.println(SKETCH_DESCRIPTION);
-  Serial.print("Sketch Identification: ");
+  Serial.print(F("Sketch Identification: "));
   Serial.print(SKETCH_NAME);
-  Serial.print(" - ");
+  Serial.print(F(" - "));
   Serial.println(SKETCH_VERSION);
-  Serial.println(" - by Shirkit @ https://github.com/orquidariobahia/arduino-sketches");
+  Serial.println(F(" - by Shirkit @ https://github.com/orquidariobahia/arduino-sketches"));
 
   bool beg = sht.begin();
   uint16_t stat = sht.readStatus();
   // TODO process the stat
   sht.read();
   int err = sht.getError();
-  Serial.println(beg ? "SHT begin" : "SHT not begin");
-  Serial.println(sht.isConnected() ? "SHT Connected" : "SHT not connected");
-  Serial.print("SHT Stat: ");
+  Serial.print(F("SHT begin: "));
+  Serial.println(beg ? F("true") : F("false"));
+  Serial.print(F("SHT connected: "));
+  Serial.println(sht.isConnected() ? F("true") : F("false"));
+  Serial.print(F("SHT Stat: "));
   Serial.print(stat);
-  Serial.print(" SHT Stat HEX: ");
+  Serial.print(F(" SHT Stat HEX: "));
   Serial.print(stat, HEX);
-  Serial.print(" SHT err: ");
+  Serial.print(F(" SHT err: "));
   Serial.print(err);
-  Serial.print(" SHT err HEX: ");
+  Serial.print(F(" SHT err HEX: "));
   Serial.println(err, HEX);
 
-  if (aht20.begin()) {
-    Serial.println("AHT21 ok");
-  } else {
-    printStatus();
-  }
+  aht20.begin();
+  Serial.print(F("AHTXXX status: "));
+  printStatus();
 
   ens160.begin(true);
   if (ens160.available()) {
     bool r = ens160.setMode(ENS160_OPMODE_STD);
-    Serial.println(r ? "done." : "failed!");
+    Serial.print(F("ENS160 init: "));
+    Serial.println(r ? F("done.") : F("failed!"));
     // Print ENS160 versions
-    Serial.print("\tRev: ");
+    Serial.print(F("\tRev: "));
     Serial.print(ens160.getMajorRev());
-    Serial.print(".");
+    Serial.print(F("."));
     Serial.print(ens160.getMinorRev());
-    Serial.print(".");
+    Serial.print(F("."));
     Serial.println(ens160.getBuild());
 
-    Serial.print("\tStandard mode ");
+    Serial.print(F("\tStandard mode "));
   } else {
     bool res = ens160.setMode(ENS160_OPMODE_STD);
-    Serial.println("Could not initialize ENS160");
+    Serial.println(F("Could not initialize ENS160"));
     Serial.println(res);
   }
 
@@ -163,11 +164,11 @@ void loop() {
   float h = sht.getHumidity() + humAdjust;
 
 #ifdef MY_DEBUG
-  Serial.print("SHT: ");
+  Serial.print(F("SHT: "));
   Serial.print(t);
-  Serial.print("ºC - ");
+  Serial.print(F("ºC - "));
   Serial.print(h);
-  Serial.println("%");
+  Serial.println(F("%"));
 #endif
   send(temp.set(t, 1));
   send(hum.set(h, 1));
@@ -218,15 +219,15 @@ void loop() {
     send(aqi.set(ens160.getAQI()));
 
 #ifdef MY_DEBUG
-    Serial.print("AQI: ");
+    Serial.print(F("AQI: "));
     Serial.print(ens160.getAQI());
-    Serial.print("\t");
-    Serial.print("TVOC: ");
+    Serial.print(F("\t"));
+    Serial.print(F("TVOC: "));
     Serial.print(ens160.getTVOC());
-    Serial.print("ppb\t");
-    Serial.print("eCO2: ");
+    Serial.print(F("ppb\t"));
+    Serial.print(F("eCO2: "));
     Serial.print(ens160.geteCO2());
-    Serial.println("ppm\t");
+    Serial.println(F("ppm\t"));
 #endif
   }
 
@@ -236,9 +237,9 @@ void loop() {
 void receive(const MyMessage &message) {
 // We only expect one type of message from controller. But we better check anyway.
 #ifdef MY_DEBUG
-  Serial.print("Incoming message for sensor:");
+  Serial.print(F("Incoming message for sensor:"));
   Serial.print(message.getSensor());
-  Serial.print(" - ");
+  Serial.print(F(" - "));
   Serial.println(message.getType());
 #endif
 
