@@ -1,12 +1,13 @@
 // Definitions
 
+#define MY_NODE_ID 67
 #define SKETCH_NAME "ENS160 and SHT31"
-#define SKETCH_VERSION "v1.1"
+#define SKETCH_VERSION "v1.2"
+#define SKETCH_DESCRIPTION "Container próximo da porta"
 
 #define MY_RADIO_RF24
-#define MY_DEBUG
+// #define MY_DEBUG
 // #define MY_REPEATER_FEATURE
-#define MY_NODE_ID 66
 // #define MY_TRANSPORT_WAIT_READY_MS 1
 // #define MY_PASSIVE_NODE
 
@@ -82,10 +83,12 @@ void setup() {
 }
 
 void before() {
-  Serial.begin(115200);
   Wire.begin();
   Wire.setClock(100000);
 
+  Serial.print("Node ID: ");
+  Serial.println(MY_NODE_ID);
+  Serial.println(SKETCH_DESCRIPTION);
   Serial.print("Sketch Identification: ");
   Serial.print(SKETCH_NAME);
   Serial.print(" - ");
@@ -93,7 +96,6 @@ void before() {
   Serial.println(" - by Shirkit @ https://github.com/orquidariobahia/arduino-sketches");
 
   bool beg = sht.begin();
-
   uint16_t stat = sht.readStatus();
   // TODO process the stat
 #ifdef MY_DEBUG
@@ -163,15 +165,7 @@ void presentation() {
   present(HUMIDITY_ADJUST_ID, S_HUM, "[c] Hum Adj (float %)");
 }
 
-void loop() {
-
-  
-  Serial.print("Sketch Identification: ");
-  Serial.print(SKETCH_NAME);
-  Serial.print(" - ");
-  Serial.println(SKETCH_VERSION);
-  Serial.println(" - by Shirkit @ https://github.com/orquidariobahia/arduino-sketches");
-  
+void loop() {  
   sht.read(false);
   float t = sht.getTemperature() + tempAdjust;
   float h = sht.getHumidity() + humAdjust;
