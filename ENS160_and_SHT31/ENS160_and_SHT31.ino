@@ -98,33 +98,28 @@ void before() {
   bool beg = sht.begin();
   uint16_t stat = sht.readStatus();
   // TODO process the stat
-#ifdef MY_DEBUG
   sht.read();
   int err = sht.getError();
-  Serial.println(beg);
-  Serial.println(sht.isConnected());
-  Serial.println(stat);
-  Serial.println(stat, HEX);
-  Serial.println(err);
+  Serial.println(beg ? "SHT begin" : "SHT not begin");
+  Serial.println(sht.isConnected() ? "SHT Connected" : "SHT not connected");
+  Serial.print("SHT Stat: ");
+  Serial.print(stat);
+  Serial.print(" SHT Stat HEX: ");
+  Serial.print(stat, HEX);
+  Serial.print(" SHT err: ");
+  Serial.print(err);
+  Serial.print(" SHT err HEX: ");
   Serial.println(err, HEX);
-#endif
 
   if (aht20.begin()) {
-#ifdef MY_DEBUG
     Serial.println("AHT21 ok");
   } else {
     printStatus();
-#endif
   }
 
-#ifdef MY_DEBUG
   ens160.begin(true);
-#else
-  ens160.begin();
-#endif
   if (ens160.available()) {
     bool r = ens160.setMode(ENS160_OPMODE_STD);
-#ifdef MY_DEBUG
     Serial.println(r ? "done." : "failed!");
     // Print ENS160 versions
     Serial.print("\tRev: ");
@@ -135,13 +130,10 @@ void before() {
     Serial.println(ens160.getBuild());
 
     Serial.print("\tStandard mode ");
-#endif
   } else {
     bool res = ens160.setMode(ENS160_OPMODE_STD);
-#ifdef MY_DEBUG
     Serial.println("Could not initialize ENS160");
     Serial.println(res);
-#endif
   }
 
   updateFrequency = readEeprom_int32(UPDATE_FREQUENCY_ID);
@@ -266,7 +258,6 @@ void receive(const MyMessage &message) {
   }
 }
 
-#ifdef MY_DEBUG
 void printStatus() {
   switch (aht20.getStatus()) {
     case AHTXX_NO_ERROR:
@@ -294,4 +285,3 @@ void printStatus() {
       break;
   }
 }
-#endif
