@@ -120,7 +120,7 @@ void presentation() {
 }
 
 void loop() {
-  /* TODO
+  /* TODOjustOn
   Changes are needed
   call -> bool isConnected() 
   call -> int getError() -> https://github.com/RobTillaart/SHT31?tab=readme-ov-file#error-interface

@@ -1,5 +1,13 @@
-Node ID,Device,Location
-61,Sensor de CO2 + Humidade + Temperatura,Sala Escura
-66,Sensor de CO2 + Humidade + Temperatura,Corredor Orquidário 3
-70,Sensor de temperatura – sala clara,Sala Clara
-71,SHT31 + Relê 15A ,Sala Clara
+Node ID,Device,Location,Repetidor,Sensores,Atuadores
+61,Sensor de CO2 + Humidade + Temperatura,Sala Escura,,,
+66,Sensor de CO2 + Humidade + Temperatura,Corredor Orquidário 3,,,
+,,,,,
+,,,,,
+,,,,,
+70,Sensor de temperatura – sala clara,Sala Clara,,,
+71,SHT31 + Relê 15A ,Sala Clara,,,
+,,,,,
+50,Repeater,Topo do Container,Yes,,
+52,Controle do Atomizador,Meio do Container,Yes,SHT31 + ENS160,Relê 25A
+53,Controle do Exaustor,Canto do Container,No,,Relê 25A
+54,Sensor do Container,Entrada do Container,Yes,SHT31 + ENS160,

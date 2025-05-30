@@ -1,0 +1,23 @@
+{
+    "name": "Serialization",
+    "version": "1.0.0",
+    "description": "A Serialization library that requires MySensors",
+    "keywords": "serialization, mysensors",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/username/hello-world.git"
+    },
+    "authors":
+    [
+      {
+        "name": "Shirkit",
+        "email": "shirkit@gmail.com"
+      }
+    ],
+    "license": "MIT",
+    "dependencies": {
+    },
+    "frameworks": "*",
+    "platforms": "*"
+  }
