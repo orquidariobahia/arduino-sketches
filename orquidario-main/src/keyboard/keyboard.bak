@@ -1,0 +1,243 @@
+/* @file HelloKeypad.pde
+|| @version 1.0
+|| @author Alexander Brevig
+|| @contact alexanderbrevig@gmail.com
+||
+|| @description
+|| | Demonstrates the simplest use of the matrix Keypad library.
+|| #
+*/
+// LCD Setup
+
+#define USE_LCD
+
+#ifdef USE_LCD
+#define LCD_COLUMS           16   //LCD columns
+#define LCD_ROWS             2    //LCD rows
+#define LCD_SPACE_SYMBOL 0x20 //space symbol from LCD ROM, see p.9 of GDM2004D datasheet
+// #define LCD_SCROLL_SPEED 350  //scroll speed in milliseconds
+#define UPDATE_SCREEN 10000
+#endif
+
+#ifdef USE_LCD
+#include <LiquidCrystal_I2C.h>
+#endif
+#include <Keypad.h>
+#include <Arduino.h>
+
+#define KEY_0 '0'
+#define KEY_1 '1'
+#define KEY_2 '2'
+#define KEY_3 '3'
+#define KEY_4 '4'
+#define KEY_5 '5'
+#define KEY_6 '6'
+#define KEY_7 '7'
+#define KEY_8 '8'
+#define KEY_9 '9'
+#define KEY_F1 'A'
+#define KEY_F2 'B'
+#define KEY_UP 'C'
+#define KEY_DOWN 'D'
+#define KEY_LEFT 'E'
+#define KEY_RIGHT 'F'
+#define KEY_ENT 'G'
+#define KEY_ESC 'H'
+#define KEY_STAR '*'
+#define KEY_HASH '#'
+
+const byte ROWS = 5; //four rows
+const byte COLS = 4; //three columns
+char keys[ROWS][COLS] = {
+  {KEY_F1, KEY_F2, KEY_HASH, KEY_STAR},
+  {KEY_1, KEY_2, KEY_3, KEY_UP},
+  {KEY_4, KEY_5, KEY_6, KEY_DOWN},
+  {KEY_7, KEY_8, KEY_9, KEY_ESC},
+  {KEY_LEFT, KEY_0, KEY_RIGHT, KEY_ENT}
+};
+byte rowPins[ROWS] = { 8,7,6,5,4 }; //connect to the row pinouts of the keypad
+byte colPins[COLS] = { 0,1,2,3 }; //connect to the column pinouts of the keypad
+
+Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+KeyState lastState = IDLE;
+char lastKey = NO_KEY;
+
+#ifdef USE_LCD
+LiquidCrystal_I2C lcd(PCF8574_ADDR_A21_A11_A01, 4, 5, 6, 16, 11, 12, 13, 14, POSITIVE);
+#endif
+
+void setup() {
+    Serial.begin(115200);
+    // keypad.setDebounceTime(50);
+    lcd.begin(LCD_COLUMS, LCD_ROWS, LCD_5x8DOTS);
+    lcd.clear();
+    lcd.home();
+    lcd.print(F("Keypad Test"));
+    delay(1000);
+}
+
+void loop5() {
+    char key = keypad.getKey();
+    if (key != lastKey && key != NO_KEY) {
+        lcd.clear();
+        lcd.print(F("Key: "));
+        lcd.print(key);
+        Serial.print(F("Key: "));
+        Serial.println(key);
+    }
+    lastKey = key;
+}
+
+void loop4() {
+
+    char key = keypad.getKey();
+    KeyState state = keypad.getState();
+
+    if (key != NO_KEY || (state != IDLE && state != lastState)) {
+        Serial.print(F("Key: "));
+        if (key == NO_KEY) {
+            key = lastKey;
+        }
+        Serial.print(key);
+        Serial.print(F(", State: "));
+        lcd.clear();
+        lcd.print(F("Key: "));
+        lcd.print(key);
+        lcd.setCursor(0, 1);
+        lcd.print(F("State: "));
+        switch (state) {
+            case PRESSED:
+                lcd.print(F("PRESSED"));
+                Serial.println(F("PRESSED"));
+                break;
+            case RELEASED:
+                lcd.print(F("RELEASED"));
+                Serial.println(F("RELEASED"));
+                break;
+            case HOLD:
+                lcd.print(F("HOLD"));
+                Serial.println(F("HOLD"));
+                break;
+            case IDLE:
+                lcd.print(F("IDLE"));
+                Serial.println(F("IDLE"));
+                break;
+            default:
+                lcd.print(F("UNKNOWN"));
+                Serial.println(F("UNKNOWN"));
+                break;
+        }
+        lastState = keypad.getState();
+        lastKey = keypad.getKey();
+    }
+}
+
+void loop() {
+    
+    char key = keypad.getKey();
+
+    lcd.clear();
+    lcd.home();
+    lcd.print(F("Key: "));
+
+    if (key) {
+        switch (key)
+        {
+        case KEY_F1:
+            lcd.print(F("F1"));
+            break;
+        case KEY_F2:
+            lcd.print("F2");
+            break;
+        case KEY_UP:
+            lcd.print("UP");
+            break;
+        case KEY_DOWN:
+            lcd.print("DOWN");
+            break;
+        case KEY_LEFT:
+            lcd.print("LEFT");
+            break;
+        case KEY_RIGHT:
+            lcd.print("RIGHT");
+            break;
+        case KEY_ENT:
+            lcd.print("ENT");
+            break;
+        case KEY_ESC:
+            lcd.print("ESC");
+            break;
+        default:
+            lcd.print(key);
+            break;
+        }
+    }
+    delay(10);
+}
+
+void loop2() {
+
+    char key = keypad.getKey();
+
+    if (keypad.keyStateChanged()) {
+        lcd.clear();
+        lcd.home();
+        lcd.print(F("Key: "));
+
+        if (key == NO_KEY) {
+            key = lastKey;
+        }
+
+        switch (key)
+        {
+        case KEY_F1:
+            lcd.print(F("F1"));
+            break;
+        case KEY_F2:
+            lcd.print("F2");
+            break;
+        case KEY_UP:
+            lcd.print("UP");
+            break;
+        case KEY_DOWN:
+            lcd.print("DOWN");
+            break;
+        case KEY_LEFT:
+            lcd.print("LEFT");
+            break;
+        case KEY_RIGHT:
+            lcd.print("RIGHT");
+            break;
+        case KEY_ENT:
+            lcd.print("ENT");
+            break;
+        case KEY_ESC:
+            lcd.print("ESC");
+            break;
+        default:
+            lcd.print(key);
+            break;
+        }
+        lcd.setCursor(0, 1);
+        lcd.print(F("State: "));
+        switch (keypad.getState()) {
+            case PRESSED:
+                lcd.print(F("PRESSED"));
+                break;
+            case RELEASED:
+                lcd.print(F("RELEASED"));
+                break;
+            case HOLD:
+                lcd.print(F("HOLD"));
+                break;
+            case IDLE:
+                lcd.print(F("IDLE"));
+                break;
+            default:
+                lcd.print(F("UNKNOWN"));
+                break;
+        }
+        lastKey = key;
+    }
+    delay(10);
+}

@@ -1,10 +1,11 @@
-#define MY_NODE_ID 50
+#define MY_NODE_ID 56
 #define SKETCH_NAME "Button / DS18B20 / Relay / Screen"
-#define SKETCH_VERSION "v1.0"
-#define SKETCH_DESCRIPTION "Monitoramento da Pasteurização"
+#define SKETCH_IDENTIFICATION "mysensors_56_temp_freezer"
+#define SKETCH_VERSION "v1.2"
+#define SKETCH_DESCRIPTION "Monitoramento de Todos os Freezers"
 
 #define MY_RADIO_RF24
-// #define MY_DEBUG
+#define MY_DEBUG
 // #define MY_REPEATER_FEATURE
 #define MY_TRANSPORT_WAIT_READY_MS 10000
 // #define MY_PASSIVE_NODE
@@ -181,6 +182,11 @@ void before() {
 #endif
 
     numSensors = sensors.getDeviceCount();
+#ifdef MY_DEBUG
+    Serial.print(F("Found "));
+    Serial.print(numSensors);
+    Serial.println(F(" DS18B20 sensors."));
+#endif
 
 #ifdef USE_LCD
     lcd.clear();
@@ -197,7 +203,7 @@ void presentation() {
     lcd.print(F("Presenting"));
 #endif
     Serial.println(F("Presenting"));
-    sendSketchInfo(SKETCH_NAME, SKETCH_VERSION);
+    sendSketchInfo(SKETCH_IDENTIFICATION, SKETCH_VERSION);
 
 #ifdef USE_RELAY
     present(RELAY_ID, S_BINARY, "[s] Relay Status (bool)");
@@ -244,6 +250,7 @@ void doSensors(bool sendUpdate) {
         // Fetch and round temperature to one decimal
         float temperature = static_cast<float>(static_cast<int>((getControllerConfig().isMetric || true? sensors.getTempCByIndex(i) : sensors.getTempFByIndex(i)) * 10.)) / 10.;
 
+#ifdef USE_LCD
         switch (i)
         {
         case 0:
@@ -260,7 +267,6 @@ void doSensors(bool sendUpdate) {
             break;
         }
 
-#ifdef USE_LCD
         lcd.print(i + 1);
         lcd.print(F(":"));
         lcd.print(temperature, 1);
@@ -278,13 +284,24 @@ void doSensors(bool sendUpdate) {
             send(msg.setSensor(i).set(temperature, 1));
             // Save new temperatures for next compare
             lastTemperature[i] = temperature;
+
+#ifdef MY_DEBUG
+            Serial.print(F("Sensor "));
+            Serial.print(i + 1);
+            Serial.print(F(": "));
+            Serial.print(temperature);
+            Serial.println(F("C"));
+#endif
         }
     }
 
+#ifdef USE_LCD
     if (!isTransportReady()) {
-        lcd.setCursor(11, 1);
-        lcd.print(F("T Err"));
+        wait(UPDATE_SCREEN / 2);
+        lcd.clear();
+        lcd.print(F("Transport error"));
     }
+#endif
 }
 
 void loop()

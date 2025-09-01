@@ -1,6 +1,6 @@
 #define SKETCH_NAME "ESP8266 Wi-Fi Gateway"
 #define SKETCH_VERSION "v1.0"
-#define SKETCH_DESCRIPTION "Laboratóio"
+#define SKETCH_DESCRIPTION "Laboratorio 2"
 
 // Enable debug prints to serial monitor
 // #define MY_DEBUG
@@ -24,13 +24,13 @@
 
 // Set the hostname for the WiFi Client. This is the hostname
 // it will pass to the DHCP server if not static.
-#define MY_HOSTNAME "ESP8266_GW_Estufa18"
+#define MY_HOSTNAME "ESP8266_GW_Laboratorio"
 
 // Enable MY_IP_ADDRESS here if you want a static ip address (no DHCP)
-// #define MY_IP_ADDRESS 192,168,1,248
+// #define MY_IP_ADDRESS 192,168,15,248
 
 // If using static ip you can define Gateway and Subnet address as well
-// #define MY_IP_GATEWAY_ADDRESS 192,168,1,1
+// #define MY_IP_GATEWAY_ADDRESS 192,168,15,1
 // #define MY_IP_SUBNET_ADDRESS 255,255,255,0
 
 // The port to keep open on node server mode
@@ -66,6 +66,36 @@
 #include <Arduino.h>
 #include <MySensors.h>
 #include <IPAddress.h>
+// ESP8266WiFi.h should be automatically included by MySensors
+
+// Global variables for connection monitoring
+unsigned long lastControllerHeartbeat = 0;
+unsigned long lastMessageReceived = 0;
+unsigned long connectionCheckInterval = 90000; // Check every 90 seconds
+bool controllerConnected = false;
+
+bool hasConnectedClients() {
+    return (millis() - lastMessageReceived) < 60000; // Activity in last minute
+}
+
+bool isControllerConnected() {
+    bool recentActivity = (millis() - lastMessageReceived) < 300000; // Activity in last 5 minutes
+    
+    return /*WiFi.isNetworkConnected() &&*/ isTransportReady() & (hasConnectedClients() || recentActivity);
+}
+
+#ifdef MY_DEBUG
+void printConnectionStatus() {
+    Serial.println(F("=== Connection Status ==="));    
+    Serial.print(F("Last Message: "));
+    Serial.print((millis() - lastMessageReceived) / 1000);
+    Serial.println(F(" seconds ago"));
+    
+    Serial.print(F("Controller Connected: "));
+    Serial.println(isControllerConnected() ? F("YES") : F("NO"));
+    Serial.println(F("========================"));
+}
+#endif
 
 void before() {
 #ifndef MY_DEBUG
@@ -149,10 +179,27 @@ void before() {
 
 void setup()
 {
-	// Setup locally attached sensors
+	lastMessageReceived = millis();
 }
 
 void loop()
 {
-	// Send locally attached sensors data here
+	static unsigned long lastConnectionCheck = 0;
+	
+	if (millis() - lastConnectionCheck > connectionCheckInterval) {
+		lastConnectionCheck = millis();
+		
+		#ifdef MY_DEBUG
+		printConnectionStatus();
+		#endif
+		
+		if (millis() - lastMessageReceived > 600000) {
+			// trigger device restart
+			ESP.restart();
+		}
+	}
+}
+
+void receive(const MyMessage &message) {
+	lastMessageReceived = millis();
 }

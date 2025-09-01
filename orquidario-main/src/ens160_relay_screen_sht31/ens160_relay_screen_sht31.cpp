@@ -2,27 +2,35 @@
 
 #define MY_NODE_ID 60
 #define SKETCH_NAME "ENS160 / Relay / Screen / SHT31"
-#define SKETCH_VERSION "v1.0"
+#define SKETCH_IDENTIFICATION "mysensors_60_temp_co2"
+#define SKETCH_VERSION "v1.2"
 #define SKETCH_DESCRIPTION "Monitorar Laboratório (sem relay)"
 
 #define MY_RADIO_RF24
 // #define MY_DEBUG
+// #define FIRST_CONFIGURE
 // #define MY_REPEATER_FEATURE
 #define MY_TRANSPORT_WAIT_READY_MS 10000
+#define LOCAL_SAVE
 // #define MY_PASSIVE_NODE
 // #define MY_TRANSPORT_UPLINK_CHECK_DISABLED
 // #define MY_TRANSPORT_MAX_TSM_FAILURES 100
 // #define MY_TRANSPORT_TIMEOUT_FAILURE_STATE_MS		(10*1000ul) // 10 seconds
 #define MY_RF24_DATARATE RF24_1MBPS
-
+// #define MY_RF24_DATARATE RF24_250KBPS
 
 // Functionality
 
 #define USE_LCD
 // #define USE_BUTTON
 // #define USE_RELAY
+#define USE_SHT31
+// #define USE_AHT20
+#define USE_ENS160
 
+#ifdef USE_SHT31
 #define SHT31_ADDRESS 0x44
+#endif
 
 // LCD Setup
 
@@ -42,15 +50,26 @@
 #define RELAY_OFF 1  // GPIO value to write to turn off attached relay
 #endif
 
+// Local Save setup
+#ifdef LOCAL_SAVE
+#define N_SAMPLES 10 // Number of samples to calculate average
+#endif
+
 // Sensors ID (0-39)
 
+#ifdef USE_SHT31
 #define TEMP_ID 1
 #define HUM_ID 2
+#endif
+#ifdef USE_ENS160
 #define CO2_ID 3
 #define TVOC_ID 4
 #define AQI_ID 5
+#endif
+#ifdef USE_AHT20
 #define TEMP_ID_ADDITIONAL 6
 #define HUM_ID_ADDITIONAL 7
+#endif
 
 // Actuators ID (60-99)
 
@@ -74,12 +93,20 @@
 // Libraries
 
 #include "Wire.h"
+#ifdef USE_SHT31
 #include <SHT31.h>
+#endif
+#ifdef USE_AHT20
 #include <AHTxx.h>
+#endif
+#ifdef USE_ENS160
 #include <ScioSense_ENS160.h>
+#endif
 #include <MySensors.h>
 #include <Serialization.h>
+#ifdef USE_LCD
 #include <LiquidCrystal_I2C.h>
+#endif
 
 // Global variables
 
@@ -87,37 +114,55 @@
 LiquidCrystal_I2C lcd(PCF8574_ADDR_A21_A11_A01, 4, 5, 6, 16, 11, 12, 13, 14, POSITIVE);
 unsigned long updateScreenTime = 0;
 #endif
+#ifdef USE_AHT20
 AHTxx aht20(AHTXX_ADDRESS_X38, AHT2x_SENSOR);  //sensor address, sensor type
+#endif
+#ifdef USE_ENS160
 ScioSense_ENS160 ens160(ENS160_I2CADDR_1);
+#endif
+#ifdef USE_SHT31
 SHT31 sht;
+#endif
 
 uint32_t updateFrequency = 60000;
 float tempAdjust = 0.0;
 float humAdjust = 0.0;
 bool justOn = true;
+unsigned long updateSensorsTime = 0;
+#ifdef USE_RELAY
 float maxHumidity = 0;
 float minHumidity = 0;
 uint16_t maxCo2 = 0;
 uint16_t minCo2 = 0;
-unsigned long updateSensorsTime = 0;
-#ifdef USE_RELAY
 bool autonomous = false;
 int relayStatus = RELAY_OFF;
+#endif
+#ifdef LOCAL_SAVE
+uint8_t currentPos = 0;
+uint8_t currentCount = 0;
+uint16_t calculating = 0;
 #endif
 
 // Messages
 
+#ifdef USE_SHT31
 MyMessage temp(TEMP_ID, V_TEMP);
 MyMessage hum(HUM_ID, V_HUM);
+#endif
+#ifdef USE_AHT20
 MyMessage temp2(TEMP_ID_ADDITIONAL, V_TEMP);
 MyMessage hum2(HUM_ID_ADDITIONAL, V_HUM);
+#endif
+#ifdef USE_ENS160
 MyMessage tvoc(TVOC_ID, V_LEVEL);
 MyMessage eco2(CO2_ID, V_LEVEL);
 MyMessage aqi(AQI_ID, V_LEVEL);
+#endif
 #ifdef USE_RELAY
 MyMessage relay(RELAY_ID, V_STATUS);
 #endif
 
+#ifdef USE_SHT31
 String getShtError() {
   switch (sht.getError()) {
     case SHT31_OK:
@@ -154,7 +199,9 @@ String getShtError() {
       return F("unknown error");
   }
 }
+#endif
 
+#ifdef USE_AHT20
 String getAhtStatus() {
   switch (aht20.getStatus()) {
     case AHTXX_NO_ERROR:
@@ -176,15 +223,18 @@ String getAhtStatus() {
       return F("unknown status");
   }
 }
+#endif
 
 void setup() {
-  #ifdef USE_LCD
+#ifdef USE_LCD
   lcd.clear();
   lcd.home();
   lcd.print(F("Setting up"));
-  #endif
+#endif
   Serial.println(F("Setting up"));
-  #ifdef USE_RELAY
+  delay(250);
+
+#ifdef USE_RELAY
   send(relay.set(relayStatus == RELAY_ON));
   wait(250);
   send(MyMessage(AUTONOMOUS_ID, V_STATUS).set(autonomous));
@@ -193,20 +243,28 @@ void setup() {
   wait(250);
   send(MyMessage(MIN_HUMIDITY_ID, V_HUM).set((float)minHumidity, 1));
   wait(250);
-  #endif
+#endif
   send(MyMessage(UPDATE_FREQUENCY_ID, V_TEXT).set(updateFrequency));
   wait(250);
   send(MyMessage(TEMPERATURE_ADJUST_ID, V_TEMP).set((float)tempAdjust, 1));
   wait(250);
   send(MyMessage(HUMIDITY_ADJUST_ID, V_HUM).set((float)humAdjust, 1));
   wait(250);
+#ifdef USE_ENS160
+  send(MyMessage(CO2_ID, V_UNIT_PREFIX).set("ppm"));
+  wait(250);
+  send(MyMessage(TVOC_ID, V_UNIT_PREFIX).set("ppb"));
+  wait(250);
+  send(MyMessage(AQI_ID, V_UNIT_PREFIX).set("aqi"));
+  wait(250);
+#endif
 }
 
 void before() {
   Wire.begin();
   Wire.setClock(100000);
 
-  #ifdef USE_LCD
+#ifdef USE_LCD
   if (lcd.begin(COLUMS, ROWS, LCD_5x8DOTS) != 1) //colums, rows, characters size
   {
     Serial.println(F("PCF8574 is not connected or lcd pins declaration is wrong. Only pins numbers: 4,5,6,16,11,12,13,14 are legal."));
@@ -215,12 +273,12 @@ void before() {
   lcd.home();
   lcd.leftToRight();
   lcd.print(F("Botting up"));
-  #endif
+#endif
 
-  #ifdef USE_RELAY
+#ifdef USE_RELAY
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, RELAY_OFF);
-  #endif
+#endif
 
   Serial.println(F("-----------------------------------------------"));
   Serial.print(F("Sketch Identification: "));
@@ -234,6 +292,7 @@ void before() {
   Serial.println(F(" - by Shirkit @ https://github.com/orquidariobahia/arduino-sketches"));
   Serial.println(F("-----------------------------------------------"));
 
+#ifdef USE_SHT31
   bool beg = sht.begin();
   // TODO process the stat
   sht.read();
@@ -243,8 +302,9 @@ void before() {
   Serial.println(sht.isConnected() ? F("true") : F("false"));
   Serial.print(F("SHT error: "));
   Serial.println(getShtError());
+#endif
 
-  #ifdef USE_LCD
+#ifdef USE_LCD
   int err = sht.getError();
   if (!beg || err != SHT31_OK) {
     lcd.home();
@@ -255,12 +315,13 @@ void before() {
     lcd.print(getShtError());
     wait(2000);
   }
-  #endif
+#endif
 
+#ifdef USE_AHT20
   aht20.begin();
   Serial.print(F("AHTXXX status: "));
   Serial.println(getAhtStatus());
-  #ifdef USE_LCD
+#ifdef USE_LCD
   if (aht20.getStatus() != AHTXX_NO_ERROR) {
     lcd.home();
     lcd.clear();
@@ -269,8 +330,10 @@ void before() {
     lcd.print(getAhtStatus());
     wait(2000);
   }
-  #endif
+#endif
+#endif
 
+#ifdef USE_ENS160
   ens160.begin(false);
   if (ens160.available()) {
     bool r = ens160.setMode(ENS160_OPMODE_STD);
@@ -289,70 +352,94 @@ void before() {
     bool res = ens160.setMode(ENS160_OPMODE_STD);
     Serial.println(F("Could not initialize ENS160"));
     Serial.println(res);
-    #ifdef USE_LCD
+  #ifdef USE_LCD
     lcd.home();
     lcd.clear();
     lcd.print(F("ENS160 error!"));
     wait(2000);
-    #endif
+  #endif
   }
+#endif
 
+#ifdef FIRST_CONFIGURE
+#ifdef LOCAL_SAVE
+  for (uint8_t i = 0; i < 255; i = i + 2) {
+    unsafe_storeEeprom_uint16(i, 0);
+    if (i > 253) break;
+  }
+  unsafe_storeEeprom_uint16(0, 2);
+#else
   storeEeprom_int32(UPDATE_FREQUENCY_ID, 60000);
   storeEeprom_int32(TEMPERATURE_ADJUST_ID, 0);
   storeEeprom_int32(HUMIDITY_ADJUST_ID, 0);
-  // storeEeprom(AUTONOMOUS_ID, true);
-  // storeEeprom_int32(MAX_HUMIDITY_ID, toUint32(0.0f));
-  // storeEeprom_int32(MIN_HUMIDITY_ID, toUint32(0.0f));
-  // storeEeprom_int32(MAX_CO2_ID, 800);
-  // storeEeprom_int32(MIN_CO2_ID, 500);
+  storeEeprom(AUTONOMOUS_ID, true);
+  storeEeprom_int32(MAX_HUMIDITY_ID, toUint32(90.0f));
+  storeEeprom_int32(MIN_HUMIDITY_ID, toUint32(85.0f));
+  storeEeprom_int32(MAX_CO2_ID, 800);
+  storeEeprom_int32(MIN_CO2_ID, 500);
+#endif
+#endif
 
+#ifdef LOCAL_SAVE
+  currentPos = unsafe_readEeprom_uint16(0);
+  for (uint8_t i = 2; i < 254; i = i + 2) {
+    uint16_t value = unsafe_readEeprom_uint16(i);
+    Serial.println(value);
+  }
+#else
   updateFrequency = readEeprom_int32(UPDATE_FREQUENCY_ID);
   tempAdjust = fromUint32(readEeprom_int32(TEMPERATURE_ADJUST_ID));
   humAdjust = fromUint32(readEeprom_int32(HUMIDITY_ADJUST_ID));
-  #ifdef USE_RELAY
+#ifdef USE_RELAY
   autonomous = readEeprom(AUTONOMOUS_ID);
   maxHumidity = fromUint32(readEeprom_int32(MAX_HUMIDITY_ID));
   minHumidity = fromUint32(readEeprom_int32(MIN_HUMIDITY_ID));
   maxCo2 = readEeprom_int32(MAX_CO2_ID);
   minCo2 = readEeprom_int32(MIN_CO2_ID);
-  #endif
+#endif
+#endif
 
-  #ifdef USE_LCD
+#ifdef USE_LCD
   lcd.clear();
   lcd.home();
   lcd.print(F("Init Transport"));  
-  #endif
+#endif
 }
 
 void presentation() {
-  #ifdef USE_LCD
+#ifdef USE_LCD
   lcd.clear();
   lcd.home();
   lcd.print(F("Presenting"));
-  #endif
+#endif
   Serial.println(F("Presenting"));
-  sendSketchInfo(SKETCH_NAME, SKETCH_VERSION);
+  sendSketchInfo(SKETCH_IDENTIFICATION, SKETCH_VERSION);
   wait(250);
 
-  #ifdef USE_RELAY
+#ifdef USE_RELAY
   present(RELAY_ID, S_BINARY, "[s] Relay Status (bool)");
   wait(250);
-  #endif
+#endif
+#ifdef USE_SHT31
   present(TEMP_ID, S_TEMP, "[s] Temperature (°C)");
   wait(250);
   present(HUM_ID, S_HUM, "[s] Humidity (%)");
   wait(250);
+#endif
+#ifdef USE_ENS160
   present(CO2_ID, S_AIR_QUALITY, "[s] CO2 (ppm)");
   wait(250);
   present(TVOC_ID, S_AIR_QUALITY, "[s] TVOC (ppb)");
   wait(250);
   present(AQI_ID, S_AIR_QUALITY, "[s] Air Quali - AQI (1-5)");
   wait(250);
+#endif
+#ifdef USE_AHT20
   present(TEMP_ID_ADDITIONAL, S_TEMP, "[s] Temp Addi (°C)");
   wait(250);
   present(HUM_ID_ADDITIONAL, S_HUM, "[s] Hum Addi (%)");
   wait(250);
-  
+#endif
   
   present(UPDATE_FREQUENCY_ID, S_CUSTOM, "[c] Updt Freq (uint32 ms)");
   wait(250);
@@ -361,7 +448,7 @@ void presentation() {
   present(HUMIDITY_ADJUST_ID, S_HUM, "[c] Hum Adj (float %)");
   wait(250);
 
-  #ifdef USE_RELAY
+#ifdef USE_RELAY
   present(AUTONOMOUS_ID, S_BINARY, "[c] Autonomous");
   wait(250);
   present(MAX_HUMIDITY_ID, S_HUM, "[c] Max Humid (float °C)");
@@ -372,11 +459,12 @@ void presentation() {
   wait(250);
   present(MIN_CO2_ID, S_AIR_QUALITY, "[c] Min CO2 (ppm)");
   wait(250);
-  #endif
+#endif
 
 }
 
 void doSensors(bool sendUpdate) {  
+#ifdef USE_SHT31
   sht.read(false);
   float t = sht.getTemperature() + tempAdjust;
   float h = sht.getHumidity() + humAdjust;
@@ -388,13 +476,7 @@ void doSensors(bool sendUpdate) {
   Serial.print(h);
   Serial.println(F("%"));
 #endif
-  if (sendUpdate) {
-    send(temp.set(t, 1));
-    wait(250);
-    send(hum.set(h, 1));
-    wait(250);
-  }
-  #ifdef USE_LCD
+#ifdef USE_LCD
   lcd.clear();
   lcd.home();
   lcd.print(t, 1);
@@ -402,13 +484,23 @@ void doSensors(bool sendUpdate) {
   lcd.setCursor(10, 0);
   lcd.print(h, 1);
   lcd.print(F(" %"));
+#endif
+  if (sendUpdate) {
+    send(temp.set(t, 1));
+    wait(250);
+    send(hum.set(h, 1));
+    wait(250);
+  }
+#endif
 
+#ifdef USE_LCD
   if (!isTransportReady()) {
     lcd.setCursor(11, 1);
     lcd.print(F("T Err"));
   }
-  #endif
+#endif
 
+#ifdef USE_AHT20
   float readTemp = aht20.readTemperature() + tempAdjust;
 
   if (readTemp != AHTXX_ERROR) {
@@ -442,7 +534,9 @@ void doSensors(bool sendUpdate) {
     Serial.println(getAhtStatus());
 #endif
   }
+#endif
 
+#ifdef USE_ENS160
   if (ens160.available()) {
     // if (time > 900000 || loopCount == 0) {
     //   ens160.set_envdata(t, h);
@@ -453,15 +547,31 @@ void doSensors(bool sendUpdate) {
     ens160.measureRaw(true);
 
     if (sendUpdate) {
-      send(eco2.set(ens160.geteCO2()));
+      uint16_t co2 = ens160.geteCO2();
+      send(eco2.set(co2));
       wait(250);
       send(tvoc.set(ens160.getTVOC()));
       wait(250);
       send(aqi.set(ens160.getAQI()));
       wait(250);
+
+      #ifdef LOCAL_SAVE
+      calculating += co2;
+      currentCount++;
+      if (currentCount >= N_SAMPLES) {
+        unsafe_storeEeprom_uint16(currentPos, calculating / currentCount);
+        currentCount = 0;
+        calculating = 0;
+        currentPos = currentPos + 2;
+        if (currentPos >= 254) {
+          currentPos = 2;
+        }
+        unsafe_storeEeprom_uint16(0, currentPos);
+      }
+      #endif
     }
 
-    #ifdef USE_LCD
+  #ifdef USE_LCD
     lcd.setCursor(0, 1);
     // lcd.print(F("CO2: "));
     lcd.print(ens160.geteCO2());
@@ -471,7 +581,7 @@ void doSensors(bool sendUpdate) {
     // lcd.print(F(" ppb"));
     // lcd.print(F(" | AQI: "));
     // lcd.print(ens160.getAQI());
-    #endif
+  #endif
 
 #ifdef MY_DEBUG
     Serial.print(F("AQI: "));
@@ -485,51 +595,54 @@ void doSensors(bool sendUpdate) {
     Serial.println(F("ppm\t"));
 #endif
   }
+#endif
 
-  #ifdef USE_RELAY
+#ifdef USE_RELAY
   if (sendUpdate && autonomous) {
     if (maxHumidity > 0 && minHumidity > 0) {
       if ((h < minHumidity && relayStatus == RELAY_OFF) || (justOn && h < maxHumidity)) {
-        #ifdef MY_DEBUG
+      #ifdef MY_DEBUG
         Serial.println(F("Turning on"));
         Serial.println(minHumidity);
-  #endif
+#endif
         justOn = false;
         relayStatus = RELAY_ON;
         digitalWrite(RELAY_PIN, relayStatus);
         send(relay.set(relayStatus == RELAY_ON));
       } else if (h > maxHumidity && relayStatus == RELAY_ON) {
-        #ifdef MY_DEBUG
+      #ifdef MY_DEBUG
         Serial.println(F("Turning off"));
         Serial.println(maxHumidity);
-        #endif
+      #endif
         relayStatus = RELAY_OFF;
         digitalWrite(RELAY_PIN, relayStatus);
         send(relay.set(relayStatus == RELAY_ON));
       }
     } else if (minCo2 > 0 && maxCo2 > 0) {
+    #ifdef USE_ENS160
       if ((ens160.geteCO2() > maxCo2 && relayStatus == RELAY_OFF) || (justOn && ens160.geteCO2() > minCo2)) {
-  #ifdef MY_DEBUG
+#ifdef MY_DEBUG
         Serial.println(F("Turning on"));
         Serial.println(maxCo2);
-        #endif
+      #endif
         justOn = false;
         relayStatus = RELAY_ON;
         digitalWrite(RELAY_PIN, relayStatus);
         send(relay.set(relayStatus == RELAY_ON));
       } else if (ens160.geteCO2() < minCo2 && relayStatus == RELAY_ON) {
-        #ifdef MY_DEBUG
+      #ifdef MY_DEBUG
         Serial.println(F("Turning off"));
         Serial.println(minCo2);
-        #endif
+      #endif
         relayStatus = RELAY_OFF;
         digitalWrite(RELAY_PIN, relayStatus);
         send(relay.set(relayStatus == RELAY_ON));
       }
+    #endif
     }
   }
 
-  #ifdef USE_LCD
+#ifdef USE_LCD
   if (relayStatus == RELAY_ON) {
     lcd.setCursor(14, 1);
     lcd.print(F("On"));
@@ -537,8 +650,8 @@ void doSensors(bool sendUpdate) {
     lcd.setCursor(13, 1);
     lcd.print(F("Off"));
   }
-  #endif
-  #endif
+#endif
+#endif
   justOn = false;
 }
 
@@ -555,7 +668,7 @@ void loop()
   }
   else {
 #ifdef USE_LCD
-  #ifdef LCD_SCROLL_SPEED
+#ifdef LCD_SCROLL_SPEED
       if (loopCount * BUTTON_DELAY % LCD_SCROLL_SPEED == 0) {
           lcd.scrollDisplayLeft();
       }
@@ -564,7 +677,7 @@ void loop()
           updateScreenTime = now;
           doSensors(false);
       }
-  #endif
+#endif
 #endif
   }
 
@@ -584,7 +697,7 @@ void receive(const MyMessage &message) {
       updateFrequency = message.getULong();
       storeEeprom_int32(UPDATE_FREQUENCY_ID, updateFrequency);
       break;
-    #ifdef USE_RELAY
+  #ifdef USE_RELAY
     case RELAY_ID:
       relayStatus = message.getBool() ? RELAY_ON : RELAY_OFF;
       digitalWrite(RELAY_PIN, relayStatus);
@@ -609,8 +722,8 @@ void receive(const MyMessage &message) {
       maxCo2 = message.getUInt();
       storeEeprom_int32(MAX_CO2_ID, maxCo2);
       break;
-    #endif
-    case HUMIDITY_ADJUST_ID:
+  #endif
+    case HUMIDITY_ADJUST_ID: {}
       humAdjust = message.getFloat();
       storeEeprom_int32(HUMIDITY_ADJUST_ID, humAdjust);
       break;
@@ -618,10 +731,11 @@ void receive(const MyMessage &message) {
       tempAdjust = message.getFloat();
       storeEeprom_int32(TEMPERATURE_ADJUST_ID, tempAdjust);
       break;
+  #ifdef USE_ENS160
     case CO2_ID:
-        #ifdef MY_DEBUG
+      #ifdef MY_DEBUG
         Serial.println("Sending CO2");
-        #endif
+      #endif
         ens160.measure(true);
         ens160.measureRaw(true);
 
@@ -629,10 +743,11 @@ void receive(const MyMessage &message) {
         send(eco2.set(ens160.geteCO2()));
         eco2.setDestination(0);
       break;
+  #endif
     case HUM_ID:
-        #ifdef MY_DEBUG
+      #ifdef MY_DEBUG
         Serial.println("Sending Humidity");
-        #endif
+      #endif
         sht.read(false);
         float h = sht.getHumidity() + humAdjust;
 
@@ -640,15 +755,13 @@ void receive(const MyMessage &message) {
         send(hum.set(h, 1));
         hum.setDestination(0);
       break;
-    case TEMP_ID:
-        #ifdef MY_DEBUG
+    case TEMP_ID: 
+      #ifdef MY_DEBUG
         Serial.println("Sending Temperature");
-        #endif
+      #endif
         sht.read(false);
-        float t = sht.getTemperature() + tempAdjust;
-
         temp.setDestination(message.getSender());
-        send(temp.set(t, 1));
+        send(temp.set(sht.getTemperature() + tempAdjust, 1));
         temp.setDestination(0);
       break;
   }

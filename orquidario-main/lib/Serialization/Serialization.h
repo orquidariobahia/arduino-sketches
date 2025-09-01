@@ -50,9 +50,22 @@ void storeEeprom_int32(uint8_t pos, uint32_t value) {
   saveState(actualPos + 3, (value));
 }
 
+void unsafe_storeEeprom_uint16(uint8_t pos, uint16_t value) {
+  saveState(pos, (value >> 8));
+  saveState(pos + 1, (value));
+}
+
+uint16_t unsafe_readEeprom_uint16(uint8_t pos) {
+  uint16_t high, low;
+  
+  high = loadState(pos) << 8;
+  low = loadState(pos + 1);
+  return (high | low);
+}
+
 uint32_t readEeprom_int32(uint8_t pos) {
   if (pos < 120 || pos > 159) {
-    Serial.println(F("Out of bounds attempt to save"));
+    Serial.println(F("Out of bounds attempt to read"));
     return INT_MINUMUM_VALUE;
   } else {
     int actualPos = (pos % 40) * 4;
@@ -71,7 +84,7 @@ uint32_t readEeprom_int32(uint8_t pos) {
 
 int readEeprom_int(uint8_t pos) {
   if (pos < 120 || pos > 159) {
-    Serial.println(F("Out of bounds attempt to save"));
+    Serial.println(F("Out of bounds attempt to read"));
     return INT_MINUMUM_VALUE;
   } else {
     int actualPos = (pos % 40) * 4;
@@ -85,7 +98,7 @@ int readEeprom_int(uint8_t pos) {
 
 uint8_t readEeprom(uint8_t pos) {
   if (pos < 120 || pos > 159) {
-    Serial.println(F("Out of bounds attempt to save"));
+    Serial.println(F("Out of bounds attempt to read"));
     return UINT8_MAX_VALUE;
   } else {
     int actualPos = (pos % 40) * 4;
