@@ -126,23 +126,23 @@ void loop() {
         switch (state) {
             case PRESSED:
                 lcd.print(F("PRESSED"));
-                Serial.println(F("PRESSED"));
+                // Serial.println(F("PRESSED"));
                 break;
             case RELEASED:
                 lcd.print(F("RELEASED"));
-                Serial.println(F("RELEASED"));
+                // Serial.println(F("RELEASED"));
                 break;
             case HOLD:
                 lcd.print(F("HOLD"));
-                Serial.println(F("HOLD"));
+                // Serial.println(F("HOLD"));
                 break;
             case IDLE:
                 lcd.print(F("IDLE"));
-                Serial.println(F("IDLE"));
+                // Serial.println(F("IDLE"));
                 break;
             default:
                 lcd.print(F("UNKNOWN"));
-                Serial.println(F("UNKNOWN"));
+                // Serial.println(F("UNKNOWN"));
                 break;
         }
         lastState = state;
